@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { CommonModule } from './common/common.module';
 import { ItemModule } from './item/item.module';
+import { StockTransactionModule } from './stock-transaction/stock-transaction.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ItemModule } from './item/item.module';
     AuthModule,
     CommonModule,
     ItemModule,
+    StockTransactionModule,
   ],
   controllers: [AppController],
 })
