@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PurchaseRequest } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
@@ -21,7 +21,7 @@ export class PurchaseRequestService {
       where: { id },
     });
 
-    if (!po) throw new Error('Purchase Request tidak ditemukan');
+    if (!po) throw new NotFoundException('Purchase Request tidak ditemukan');
 
     return po;
   }
@@ -45,7 +45,8 @@ export class PurchaseRequestService {
   async remove(id: number): Promise<PurchaseRequest> {
     const target = await this.findOne(id);
 
-    if (!target) throw new Error('Purchase Request tidak ditemukan');
+    if (!target)
+      throw new NotFoundException('Purchase Request tidak ditemukan');
 
     return this.prisma.purchaseRequest.delete({
       where: { id: target.id },
