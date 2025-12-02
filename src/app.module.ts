@@ -8,6 +8,7 @@ import { CommonModule } from './common/common.module';
 import { ItemModule } from './item/item.module';
 import { StockTransactionModule } from './stock-transaction/stock-transaction.module';
 import { PurchaseRequestModule } from './purchase-request/purchase-request.module';
+import { PurchaseOrderModule } from './purchase-order/purchase-order.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PurchaseRequestModule } from './purchase-request/purchase-request.modul
     ItemModule,
     StockTransactionModule,
     PurchaseRequestModule,
+    PurchaseOrderModule,
   ],
   controllers: [AppController],
 })
