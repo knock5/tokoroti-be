@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { Role } from '../../generated/prisma/client';
 
 export const CreateUserSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
   password: z.string().min(6),
   name: z.string().optional(),
   role: z.enum(Role).optional(),
