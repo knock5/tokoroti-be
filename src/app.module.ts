@@ -9,6 +9,7 @@ import { ItemModule } from './item/item.module';
 import { StockTransactionModule } from './stock-transaction/stock-transaction.module';
 import { PurchaseRequestModule } from './purchase-request/purchase-request.module';
 import { PurchaseOrderModule } from './purchase-order/purchase-order.module';
+import { StockOpnameModule } from './stock-opname/stock-opname.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { PurchaseOrderModule } from './purchase-order/purchase-order.module';
     StockTransactionModule,
     PurchaseRequestModule,
     PurchaseOrderModule,
+    StockOpnameModule,
   ],
   controllers: [AppController],
 })
