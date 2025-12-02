@@ -1,0 +1,264 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+  provider = "mysql"
+}
+
+generator client {
+  provider      = "prisma-client"
+  output        = "../src/generated/prisma"
+  moduleFormat  = "cjs"
+}
+
+
+enum Role {
+  ADMIN
+  WAREHOUSE
+  KITCHEN
+}
+
+enum TransactionType {
+  IN
+  OUT
+}
+
+enum PurchaseOrderStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  RECEIVED
+  CANCELLED
+}
+
+enum PurchaseRequestStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  ORDERED
+  CANCELLED
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String?
+  role      Role     @default(WAREHOUSE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+
+  stockTransactions StockTransaction[]
+  purchaseOrdersCreated PurchaseOrder[] @relation("po_created")
+  purchaseOrdersApproved PurchaseOrder[] @relation("po_approved")
+  purchaseRequests PurchaseRequest[]
+  productions Production[]
+  stockOpnames StockOpname[]
+  shoppingLogs ShoppingLog[]
+  sales Sale[]
+  expenses Expense[]
+}
+
+model Item {
+  id        Int      @id @default(autoincrement())
+  name      String
+  unit      String
+  minStock  Decimal  @db.Decimal(10,3) @default("0")
+  stock     Decimal  @db.Decimal(12,3) @default("0")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+
+  stockTransactions  StockTransaction[]
+  purchaseOrders     PurchaseOrder[]
+  purchaseRequests   PurchaseRequest[]
+  productionItems    ProductionItem[]
+  stockOpnameItems   StockOpnameItem[]
+  shoppingLogItems   ShoppingLogItem[]
+  saleItems          SaleItem[]
+
+  @@index([name])
+}
+
+model StockTransaction {
+  id        Int      @id @default(autoincrement())
+  itemId    Int
+  qty       Decimal  @db.Decimal(12,3)
+  type      TransactionType
+  unitPrice Decimal? @db.Decimal(12,2)
+  note      String?
+  createdBy Int?
+  createdAt DateTime @default(now())
+
+  item      Item?    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([itemId])
+  @@index([createdBy])
+  @@index([type])
+}
+
+model PurchaseOrder {
+  id            Int      @id @default(autoincrement())
+  itemId        Int
+  qtyOrdered    Decimal  @db.Decimal(12,3)
+  status        PurchaseOrderStatus @default(PENDING)
+  createdById   Int?
+  approvedById  Int?
+  note          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt @default(now())
+  resolvedAt    DateTime?
+
+  createdBy     User?    @relation("po_created", fields: [createdById], references: [id], onDelete: SetNull)
+  approvedBy    User?    @relation("po_approved", fields: [approvedById], references: [id], onDelete: SetNull)
+  item          Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@index([status])
+}
+
+model Production {
+  id          Int      @id @default(autoincrement())
+  name        String
+  producedAt  DateTime @default(now())
+  createdById Int?
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt @default(now())
+
+  user        User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  items       ProductionItem[]
+}
+
+model ProductionItem {
+  id            Int      @id @default(autoincrement())
+  productionId  Int
+  itemId        Int
+  qtyUsed       Decimal  @db.Decimal(12,3)
+
+  production    Production @relation(fields: [productionId], references: [id], onDelete: Cascade)
+  item          Item       @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([productionId])
+  @@index([itemId])
+}
+
+model StockOpname {
+  id        Int      @id @default(autoincrement())
+  date      DateTime @default(now())
+  createdBy Int?
+  note      String?
+  createdAt DateTime @default(now())
+
+  createdByUser User? @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  items         StockOpnameItem[]
+
+  @@index([date])
+}
+
+model StockOpnameItem {
+  id           Int      @id @default(autoincrement())
+  stockOpnameId Int
+  itemId       Int
+  qtyPhysical  Decimal  @db.Decimal(12,3)
+  note         String?
+
+  stockOpname  StockOpname @relation(fields: [stockOpnameId], references: [id], onDelete: Cascade)
+  item         Item       @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([stockOpnameId])
+  @@index([itemId])
+}
+
+model PurchaseRequest {
+  id         Int      @id @default(autoincrement())
+  itemId     Int
+  qty        Decimal  @db.Decimal(12,3)
+  requestedBy Int?
+  status     PurchaseRequestStatus @default(REQUESTED)
+  note       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt @default(now())
+
+  requestedByUser User? @relation(fields: [requestedBy], references: [id], onDelete: SetNull)
+  item            Item  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@index([status])
+}
+
+model ShoppingLog {
+  id        Int      @id @default(autoincrement())
+  buyerId   Int?
+  date      DateTime @default(now())
+  note      String?
+  total     Decimal  @db.Decimal(12,2) @default("0")
+  createdAt DateTime @default(now())
+
+  buyer User? @relation(fields: [buyerId], references: [id], onDelete: SetNull)
+  items ShoppingLogItem[]
+
+  @@index([date])
+}
+
+model ShoppingLogItem {
+  id            Int      @id @default(autoincrement())
+  shoppingLogId Int
+  itemId        Int?
+  name          String
+  qty           Decimal  @db.Decimal(12,3)
+  unitPrice     Decimal  @db.Decimal(12,2)
+
+  shoppingLog   ShoppingLog @relation(fields: [shoppingLogId], references: [id], onDelete: Cascade)
+  item          Item?       @relation(fields: [itemId], references: [id], onDelete: SetNull)
+
+  @@index([shoppingLogId])
+  @@index([itemId])
+}
+
+model Sale {
+  id        Int      @id @default(autoincrement())
+  date      DateTime @default(now())
+  createdBy Int?
+  total     Decimal  @db.Decimal(12,2)
+  note      String?
+  createdAt DateTime @default(now())
+
+  createdByUser User? @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  items SaleItem[]
+
+  @@index([date])
+}
+
+model SaleItem {
+  id      Int      @id @default(autoincrement())
+  saleId  Int
+  itemId  Int?
+  name    String
+  qty     Decimal  @db.Decimal(12,3)
+  unitPrice Decimal @db.Decimal(12,2)
+  total    Decimal @db.Decimal(12,2)
+
+  sale Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  item Item? @relation(fields: [itemId], references: [id], onDelete: SetNull)
+
+  @@index([saleId])
+  @@index([itemId])
+}
+
+model Expense {
+  id        Int      @id @default(autoincrement())
+  date      DateTime @default(now())
+  type      String   // perlengkapan, transport, dll
+  amount    Decimal  @db.Decimal(12,2)
+  note      String?
+  createdAt DateTime @default(now())
+  createdBy Int?
+
+  createdByUser User? @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([date])
+}
